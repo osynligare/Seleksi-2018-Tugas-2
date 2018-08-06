@@ -7,19 +7,24 @@ import matplotlib.pyplot as plt
 def actor_genre(data):
     # create list of actor with genres and amount of movies on each genre
     actor_genre = {}
+    movies = {}
 
     # iterate through the data
     for i in range(len(data)):
         actor = data[i]['actor']
         actor_genre[actor] = {}
+        movies[actor] = {}
         for movie in data[i]['movies']:
             for genre in movie['genre']:
                 if genre in actor_genre[actor]:
                     actor_genre[actor][genre] += 1
+                    movies[actor][genre].append(movie['title'])
                 else:
                     actor_genre[actor][genre] = 1
+                    movies[actor][genre] = []
+                    movies[actor][genre].append(movie['title'])
 
-    return actor_genre
+    return actor_genre, movies
 
 
 #---- Return list of movies with year and average rating for each actor ----#
@@ -51,18 +56,44 @@ def actor_rating(data):
 #---- Return list of actor with amount of movie each year ----#
 def actor_amount(data):
     movie_yearly = {}
+    movies = {}
 
     # iterate through the data to find average
     for i in range(len(data)):
         actor = data[i]['actor']
         movie_yearly[actor] = {}
+        movies[actor] = {}
         for movie in data[i]['movies']:
             if movie['year'] in movie_yearly[actor]:
                 movie_yearly[actor][movie['year']] += 1
+                movies[actor][movie['year']].append(movie['title'])
             else:
                 movie_yearly[actor][movie['year']] = 1
+                movies[actor][movie['year']] = []
+                movies[actor][movie['year']].append(movie['title'])
 
-    return movie_yearly
+    return movie_yearly, movies
+
+
+#---- Return list of actors with amount of movies for every studio ----#
+def actor_studio(data):
+    studio = {}
+    movies = {}
+
+    # iterate through the data to find average
+    for i in range(len(data)):
+        actor = data[i]['actor']
+        studio[actor] = {}
+        movies[actor] = {}
+        for movie in data[i]['movies']:
+            if movie['studio'] in studio[actor]:
+                studio[actor][movie['studio']] += 1
+                movies[actor][movie['studio']].append(movie['title'])
+            else:
+                studio[actor][movie['studio']] = 1
+                movies[actor][movie['studio']] = []
+                movies[actor][movie['studio']].append(movie['title'])
+    return studio, movies
 
 
 #---- Return list of movies with year and average rating for every studio ----#

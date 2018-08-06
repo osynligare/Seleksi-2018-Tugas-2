@@ -1,12 +1,12 @@
 # libs
+import ast
 import json
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
-import pandas as pd
 import plotly.graph_objs as go
-from data import actor_genre, actor_amount, actor_rating
+from data import actor_genre, actor_amount, actor_rating, actor_studio
 
 app = dash.Dash()
 
@@ -14,12 +14,12 @@ app = dash.Dash()
 with open('../data/data.json') as f:
     data = json.load(f)
 # retrieve data
-actor_genre = actor_genre(data)
-actor_amount = actor_amount(data)
+actor_genre, actor_movies_genre = actor_genre(data)
+actor_amount, actor_movies_year = actor_amount(data)
 actor_rating = actor_rating(data)
-# df = pd.DataFrame.from_dict(actor_genre)
+actor_studio, actor_movies_studio = actor_studio(data)
 
-category = ['Actor-Genre', 'Actor-Movies/Year', 'Actor-Rating']
+category = ['Actor-Genre', 'Actor-Movies/Year', 'Actor-Rating', 'Actor-Studio']
 global category_selected
 category_selected = 'Actor-Genre'
 
@@ -31,7 +31,7 @@ app.layout = html.Div([
             options=[{'label': k, 'value': k} for k in category],
             value=category_selected,
         )
-    ], style={'display': 'inline-block', 'width': '15%'}),
+    ], style={'display': 'block', 'width': '100%', 'align-items': 'center'}),
     html.Div([    
         html.H1(id='category-selected'),
         html.Div(children='''
@@ -44,8 +44,9 @@ app.layout = html.Div([
         ),
         dcc.Graph(
             id='graph',
-        )
-    ], style={'display': 'inline-block', 'width': '85%'}),
+        ),
+        html.Div(id='movies')
+    ], style={'display': 'block', 'width': '100%'}),
 ], style={'height': '100%', 'width': '100%', 'fontFamily': 'Helvetica'})
 
 
@@ -82,9 +83,13 @@ def create_graph(input_value):
         data = actor_rating
         graph_type = 'chart'
         yaxis_title = 'Average Rating'
-    else:
+    elif category_selected=='Actor-Movies/Year':
         data = actor_amount
         graph_type = 'chart'
+        yaxis_title = 'Amount of Movies'
+    elif category_selected=='Actor-Studio':
+        data = actor_studio
+        graph_type = 'bar'
         yaxis_title = 'Amount of Movies'
     figure = {
         'data': [
@@ -96,6 +101,42 @@ def create_graph(input_value):
     }
 
     return figure
+
+# clicked graph
+@app.callback(
+    Output('movies', 'children'),
+    [Input('graph', 'clickData'),
+    Input('actor-dropdown', 'value')]
+)
+def show_movies(clickData, actor):
+    data = json.dumps(clickData)
+    data = ast.literal_eval(data)
+    number = 1
+    x = data['points'][0]['x']
+    children = [html.H3(children='Movies from {}:'.format(x))]
+    if category_selected == 'Actor-Rating' or category_selected == 'Actor-Movies/Year':
+        for movie in actor_movies_year[actor][x]:
+            string = str(number) + '. ' + movie
+            children.append(html.P(
+                children=string
+            ))
+            number += 1
+    elif category_selected == 'Actor-Genre':
+        for movie in actor_movies_genre[actor][x]:
+            string = str(number) + '. ' + movie
+            children.append(html.P(
+                children=string
+            ))
+            number += 1
+    elif category_selected == 'Actor-Studio':
+        for movie in actor_movies_studio[actor][x]:
+            string = str(number) + '. ' + movie
+            children.append(html.P(
+                children=string
+            ))
+            number += 1
+        
+    return children
 
 
 if __name__ == '__main__':
